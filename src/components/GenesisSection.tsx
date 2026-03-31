@@ -1,11 +1,23 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { useMemo } from 'react';
 
 export default function GenesisSection() {
   const { ref, inView } = useInView({
     threshold: 0.3,
     triggerOnce: true,
   });
+
+  const orbs = useMemo(
+    () =>
+      Array.from({ length: 5 }).map(() => ({
+        width: `${Math.random() * 300 + 100}px`,
+        height: `${Math.random() * 300 + 100}px`,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      })),
+    [],
+  );
 
   const paragraphs = [
     'No princípio, não havia nada além do Éter — uma vastidão infinita e sem forma.',
@@ -45,19 +57,14 @@ export default function GenesisSection() {
       </div>
 
       <div className="absolute inset-0">
-        {[...Array(5)].map((_, i) => (
+        {orbs.map((orb, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 0.1 } : {}}
             transition={{ duration: 2, delay: i * 0.2 }}
             className="absolute rounded-full bg-ancient-gold blur-3xl"
-            style={{
-              width: `${Math.random() * 300 + 100}px`,
-              height: `${Math.random() * 300 + 100}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
+            style={orb}
           />
         ))}
       </div>

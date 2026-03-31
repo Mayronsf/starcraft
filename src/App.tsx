@@ -14,21 +14,29 @@ import RulesModal from './components/RulesModal';
 function App() {
   const [scrollY, setScrollY] = useState(0);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [enableParallax, setEnableParallax] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setEnableParallax(mq.matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
+  useEffect(() => {
+    if (!enableParallax) return;
+
+    const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [enableParallax]);
 
   return (
     <div className="relative bg-deep-black overflow-x-hidden">
       <Particles color="#c9a84c" count={40} type="embers" />
 
-      <div style={{ transform: `translateY(${scrollY * 0.5}px)` }}>
+      <div style={enableParallax ? { transform: `translateY(${scrollY * 0.5}px)` } : undefined}>
         <HeroSection />
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
@@ -7,6 +7,15 @@ export default function ProphecySection() {
     threshold: 0.3,
     triggerOnce: true,
   });
+
+  const floatingDots = useMemo(
+    () =>
+      Array.from({ length: 6 }).map(() => ({
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      })),
+    [],
+  );
 
   const prophecyLines = [
     'Virão quatro.',
@@ -103,7 +112,7 @@ export default function ProphecySection() {
         </div>
       </div>
 
-      {[...Array(6)].map((_, i) => (
+      {floatingDots.map((dot, i) => (
         <motion.div
           key={i}
           animate={{
@@ -117,10 +126,7 @@ export default function ProphecySection() {
             ease: 'easeInOut',
           }}
           className="absolute w-1 h-1 bg-end-purple rounded-full"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
+          style={dot}
         />
       ))}
 
