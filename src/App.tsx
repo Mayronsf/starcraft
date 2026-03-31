@@ -15,13 +15,23 @@ function App() {
   const [scrollY, setScrollY] = useState(0);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [enableParallax, setEnableParallax] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
     const mq = window.matchMedia('(min-width: 768px)');
-    const update = () => setEnableParallax(mq.matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const update = () => {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setEnableParallax(mq.matches && !prefersReducedMotion);
+      setIsMobile(mobileQuery.matches);
+    };
     update();
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    mobileQuery.addEventListener('change', update);
+    return () => {
+      mq.removeEventListener('change', update);
+      mobileQuery.removeEventListener('change', update);
+    };
   }, []);
 
   useEffect(() => {
@@ -34,7 +44,7 @@ function App() {
 
   return (
     <div className="relative bg-deep-black overflow-x-hidden">
-      <Particles color="#c9a84c" count={40} type="embers" />
+      <Particles color="#c9a84c" count={isMobile ? 18 : 40} type="embers" />
 
       <div style={enableParallax ? { transform: `translateY(${scrollY * 0.5}px)` } : undefined}>
         <HeroSection />

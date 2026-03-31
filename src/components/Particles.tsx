@@ -16,8 +16,17 @@ export default function Particles({ color = '#c9a84c', count = 50, type = 'ember
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const targetCount = prefersReducedMotion ? Math.min(count, 8) : isMobile ? Math.min(count, 18) : count;
+    const frameInterval = isMobile || prefersReducedMotion ? 1000 / 30 : 1000 / 45;
+
+    const setCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    setCanvasSize();
 
     interface Particle {
       x: number;
@@ -31,7 +40,7 @@ export default function Particles({ color = '#c9a84c', count = 50, type = 'ember
 
     const particles: Particle[] = [];
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < targetCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -44,8 +53,15 @@ export default function Particles({ color = '#c9a84c', count = 50, type = 'ember
     }
 
     let animationFrameId: number;
+    let lastFrameTime = 0;
+    let isPaused = document.hidden;
 
-    const animate = () => {
+    const animate = (timestamp: number) => {
+      if (isPaused || timestamp - lastFrameTime < frameInterval) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTime = timestamp;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particles.forEach((particle) => {
@@ -83,18 +99,22 @@ export default function Particles({ color = '#c9a84c', count = 50, type = 'ember
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationFrameId = requestAnimationFrame(animate);
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      setCanvasSize();
+    };
+    const handleVisibilityChange = () => {
+      isPaused = document.hidden;
     };
 
     window.addEventListener('resize', handleResize);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [color, count, type]);
 
