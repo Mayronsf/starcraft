@@ -8,8 +8,7 @@ export default function CTASection() {
     triggerOnce: true,
   });
 
-  const whatsappHref =
-    'https://wa.me/5581981367877?text=Quero%20entrar%20no%20mundo%20de%20StarCraft%20%E2%80%94%20A%20G%C3%AAnese%21';
+  const discordHref = 'https://discord.gg/Zxa3N3kX7F';
 
   return (
     <section
@@ -56,7 +55,7 @@ export default function CTASection() {
           transition={{ duration: 1, delay: 1 }}
         >
           <a
-            href={whatsappHref}
+            href={discordHref}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative inline-flex px-12 py-5 bg-ancient-gold text-deep-black font-title text-xl md:text-2xl font-bold rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(201,168,76,0.6)]"

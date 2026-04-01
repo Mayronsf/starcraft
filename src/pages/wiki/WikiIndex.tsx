@@ -24,10 +24,13 @@ export default function WikiIndex() {
 
       <ul className="wiki-list">
         <li>
-          <Link to="/wiki/genese" className={wikiLinkClass}>
-            Livro I — A Gênese de StarCraft
+          <Link to="/wiki/genese-livros" className={wikiLinkClass}>
+            Crônicas (livros)
           </Link>
-          <span className="text-[#54595d]"> — crônica dos primeiros dias (história principal)</span>
+          <span className="text-[#54595d]">
+            {' '}
+            — índice dos Livros I a V (Gênese, Sementes, Mapa das Eras, Pergaminho, Sussurros)
+          </span>
         </li>
         <li>
           <Link to="/wiki/linha-do-tempo" className={wikiLinkClass}>

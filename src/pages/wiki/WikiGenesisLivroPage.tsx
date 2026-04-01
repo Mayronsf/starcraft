@@ -19,7 +19,11 @@ export default function WikiGenesisLivroPage() {
           Página principal da Wiki
         </Link>
         <span className="mx-1.5">·</span>
-        <span>Livro I (crônica)</span>
+        <Link to="/wiki/genese-livros" className="text-[#3366cc] hover:underline">
+          Crônicas (livros)
+        </Link>
+        <span className="mx-1.5">·</span>
+        <span>Livro I</span>
       </nav>
 
       <h1 className="wiki-h1">{WIKI_GENESIS_LIVRO_I_TITLE}</h1>
