@@ -13,15 +13,21 @@ type Props = {
 };
 
 /**
- * Carrega a imagem sem crossOrigin — o loadImage do skinview-utils usa crossOrigin=anonymous,
- * o que falha com data URLs (uploads) em vários browsers.
+ * - data: → sem crossOrigin (anonymous quebra data URL no browser).
+ * - http(s): → crossOrigin anonymous para o WebGL do skinview3d poder usar a textura
+ *   (URLs do Supabase Storage são cross-origin; sem CORS o loadSkin falha e cai no fallback 2D).
  */
 function loadImageElement(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error('Falha ao carregar a textura da skin'));
-    image.src = src;
+    if (src.startsWith('data:')) {
+      image.src = src;
+    } else {
+      image.crossOrigin = 'anonymous';
+      image.src = src;
+    }
   });
 }
 
