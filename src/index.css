@@ -35,6 +35,11 @@
   .bg-gradient-radial {
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
+
+  /* Área da skin / preview (fundo sólido escuro) */
+  .skin-view-bg {
+    background-color: #1a1a1a;
+  }
 }
 
 /* Wiki (estilo MediaWiki / Wikipedia: painel claro, links azuis, serif nos títulos) */

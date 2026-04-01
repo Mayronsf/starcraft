@@ -24,10 +24,10 @@ export default function WikiIndex() {
 
       <ul className="wiki-list">
         <li>
-          <Link to="/wiki/starcraft" className={wikiLinkClass}>
-            StarCraft — A Gênese
+          <Link to="/wiki/genese" className={wikiLinkClass}>
+            Livro I — A Gênese de StarCraft
           </Link>
-          <span className="text-[#54595d]"> — história do servidor e informações técnicas</span>
+          <span className="text-[#54595d]"> — crônica dos primeiros dias (história principal)</span>
         </li>
         <li>
           <Link to="/wiki/linha-do-tempo" className={wikiLinkClass}>
@@ -40,6 +40,18 @@ export default function WikiIndex() {
             Kingdoms
           </Link>
           <span className="text-[#54595d]"> — clãs e facções do servidor</span>
+        </li>
+        <li>
+          <Link to="/wiki/fichas" className={wikiLinkClass}>
+            Fichas de personagens
+          </Link>
+          <span className="text-[#54595d]"> — cards de personagens e ficha expandida</span>
+        </li>
+        <li>
+          <Link to="/wiki/leis" className={wikiLinkClass}>
+            Leis do mundo
+          </Link>
+          <span className="text-[#54595d]"> — regras do Discord e do servidor</span>
         </li>
       </ul>
 

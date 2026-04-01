@@ -18,7 +18,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intersection-observer": "^10.0.3",
-    "react-router-dom": "^7.13.2"
+    "react-router-dom": "^7.13.2",
+    "skinview3d": "^3.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

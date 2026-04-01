@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { MessageCircle, Server, BookOpen, Puzzle, ScrollText } from 'lucide-react';
+import { MessageCircle, Server, BookOpen, Puzzle, ScrollText, Users } from 'lucide-react';
 
 type FooterProps = {
   onOpenRules: () => void;
@@ -16,6 +16,7 @@ export default function Footer({ onOpenRules }: FooterProps) {
     { icon: MessageCircle, label: 'Discord', href: 'https://discord.gg/Zxa3N3kX7F', external: true },
     { icon: Puzzle, label: 'Plugins', to: '/plugins' },
     { icon: ScrollText, label: 'Wiki', to: '/wiki' },
+    { icon: Users, label: 'Personagens', to: '/wiki/fichas' },
     { icon: Server, label: 'IP do Servidor', href: '#' },
     { icon: BookOpen, label: 'Regras', href: '#', onClick: onOpenRules },
   ];
