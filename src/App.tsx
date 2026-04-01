@@ -7,6 +7,7 @@ import TheWorldSection from './components/TheWorldSection';
 import DimensionsSection from './components/DimensionsSection';
 import FourPathsSection from './components/FourPathsSection';
 import ProphecySection from './components/ProphecySection';
+import ServerPluginsSection from './components/ServerPluginsSection';
 import CTASection from './components/CTASection';
 import Footer from './components/Footer';
 import RulesModal from './components/RulesModal';
@@ -56,6 +57,7 @@ function App() {
       <DimensionsSection />
       <FourPathsSection />
       <ProphecySection />
+      <ServerPluginsSection />
       <CTASection />
       <Footer onOpenRules={() => setRulesOpen(true)} />
       <RulesModal open={rulesOpen} onClose={() => setRulesOpen(false)} />

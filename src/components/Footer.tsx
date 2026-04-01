@@ -7,7 +7,7 @@ type FooterProps = {
 
 export default function Footer({ onOpenRules }: FooterProps) {
   const links = [
-    { icon: MessageCircle, label: 'Discord', href: 'https://discord.gg/QCFeXcc6HJ', external: true },
+    { icon: MessageCircle, label: 'Discord', href: 'https://discord.gg/Zxa3N3kX7F', external: true },
     { icon: Server, label: 'IP do Servidor', href: '#' },
     { icon: BookOpen, label: 'Regras', href: '#', onClick: onOpenRules },
   ];
