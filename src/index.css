@@ -36,3 +36,34 @@
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
 }
+
+/* Wiki (estilo MediaWiki / Wikipedia: painel claro, links azuis, serif nos títulos) */
+@layer components {
+  .wiki-prose {
+    @apply text-sm leading-[1.6] text-[#202122] font-body;
+  }
+
+  .wiki-prose .wiki-h1 {
+    @apply font-narrative text-[1.75rem] md:text-[2rem] font-normal tracking-tight text-black border-b border-[#a2a9b1] pb-1.5 mb-4;
+  }
+
+  .wiki-prose .wiki-h2 {
+    @apply font-narrative text-[1.35rem] md:text-[1.5rem] font-normal text-black mt-7 mb-2;
+  }
+
+  .wiki-prose .wiki-rule {
+    @apply border-0 border-t border-[#a2a9b1] my-3;
+  }
+
+  .wiki-prose .wiki-list {
+    @apply list-disc pl-8 my-3 space-y-1.5 marker:text-black;
+  }
+
+  .wiki-prose .wiki-list-nested {
+    @apply list-disc pl-8 mt-2 mb-1 space-y-1 marker:text-black;
+  }
+
+  .wiki-prose code {
+    @apply text-[0.8em] font-mono text-[#202122];
+  }
+}

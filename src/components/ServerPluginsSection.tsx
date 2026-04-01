@@ -8,18 +8,26 @@ import { Puzzle } from 'lucide-react';
  */
 export const SERVER_PLUGINS: { name: string; description?: string }[] = [];
 
-export default function ServerPluginsSection() {
+type ServerPluginsSectionProps = {
+  variant?: 'section' | 'page';
+};
+
+export default function ServerPluginsSection({ variant = 'section' }: ServerPluginsSectionProps) {
   const { ref, inView } = useInView({
     threshold: 0.2,
     triggerOnce: true,
   });
 
   const hasPlugins = SERVER_PLUGINS.length > 0;
+  const isPage = variant === 'page';
+  const Title = isPage ? motion.h1 : motion.h2;
 
   return (
     <section
       ref={ref}
-      className="relative min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-deep-black via-[#0c0a06] to-deep-black overflow-hidden py-20"
+      className={`relative flex items-center justify-center bg-gradient-to-b from-deep-black via-[#0c0a06] to-deep-black overflow-hidden py-20 ${
+        isPage ? 'min-h-[calc(100vh-4.5rem)]' : 'min-h-[70vh]'
+      }`}
     >
       <div className="relative z-10 max-w-4xl px-6 w-full">
         <motion.div
@@ -31,9 +39,9 @@ export default function ServerPluginsSection() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full border border-ancient-gold/40 bg-ancient-gold/5 mb-6">
             <Puzzle className="w-7 h-7 text-ancient-gold" aria-hidden />
           </div>
-          <h2 className="font-title text-4xl md:text-5xl text-ancient-gold mb-4">
+          <Title className="font-title text-4xl md:text-5xl text-ancient-gold mb-4">
             Plugins do servidor
-          </h2>
+          </Title>
           <p className="font-narrative text-parchment/75 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
             Ferramentas que moldam a experiência no mundo. A lista será atualizada conforme o servidor evolui.
           </p>
