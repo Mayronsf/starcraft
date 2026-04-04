@@ -30,8 +30,25 @@ enquanto usares o envio por defeito deles. Para aparecer algo como
 "StarCraft <noreply@teudominio.com>" é preciso configurar SMTP próprio:
 Project Settings → Authentication → SMTP Settings (ou documentação atual do painel).
 
-Redirect URLs
--------------
-Garante que a URL de recuperação está na lista em
-Authentication → URL Configuration → Redirect URLs
-(ex.: http://localhost:5173/redefinir-palavra-passe e o URL de produção).
+Redirect URLs (Supabase)
+------------------------
+Authentication → URL Configuration.
+
+COPIAR E COLAR — Site URL (campo único)
+---------------------------------------
+https://starcraft-silk.vercel.app
+
+COPIAR E COLAR — Redirect URLs (adiciona cada linha como entrada; uma por linha no painel)
+-----------------------------------------------------------------------------------------
+https://starcraft-silk.vercel.app/**
+https://starcraft-silk.vercel.app/redefinir-palavra-passe
+http://localhost:5173/**
+http://localhost:5173/redefinir-palavra-passe
+
+Se o painel não aceitar **, usa em alternativa:
+https://starcraft-silk.vercel.app/
+https://starcraft-silk.vercel.app/redefinir-palavra-passe
+
+Nota: após mudar isto, novos emails de confirmação passam a redirecionar bem; pede reenvio
+ou regista de novo no site em produção. O cadastro no app já envia emailRedirectTo com o
+domínio em que a pessoa abriu a página (Vercel ou local).

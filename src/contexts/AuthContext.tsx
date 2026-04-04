@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { getPasswordRecoveryRedirectUrl, getSupabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import {
+  getEmailAuthRedirectUrl,
+  getPasswordRecoveryRedirectUrl,
+  getSupabase,
+  isSupabaseConfigured,
+} from '../lib/supabaseClient';
 
 export type SignUpResult = {
   error: Error | null;
@@ -87,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: nick ? { nick, display_name: nick } : {},
+        emailRedirectTo: getEmailAuthRedirectUrl(),
       },
     });
     if (error) {

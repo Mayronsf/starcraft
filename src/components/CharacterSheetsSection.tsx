@@ -40,6 +40,15 @@ type Character = {
 
 const MAX_SKIN_FILE_BYTES = 1_500_000;
 
+function mensagemErro(e: unknown, fallback: string): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
+    const m = (e as { message: string }).message;
+    if (m) return m;
+  }
+  return fallback;
+}
+
 function mapRowToCharacter(row: CharacterRow): Character {
   return {
     id: row.id,
@@ -258,7 +267,7 @@ export default function CharacterSheetsSection() {
         if (!cancelled) setPersonagens(rows.map(mapRowToCharacter));
       } catch (e) {
         if (!cancelled) {
-          setListError(e instanceof Error ? e.message : 'Erro ao carregar as fichas de personagem.');
+          setListError(mensagemErro(e, 'Erro ao carregar as fichas de personagem.'));
         }
       } finally {
         if (!cancelled) setListLoading(false);
@@ -300,8 +309,9 @@ export default function CharacterSheetsSection() {
 
   const handleClose = () => setSelectedId(null);
 
+  /** Com user_id no banco: só o dono. Fichas antigas sem dono: qualquer usuário logado pode remover (compat. com schema legado). */
   const podeRemover = (personagem: Character) =>
-    Boolean(user && personagem.ownerUserId && personagem.ownerUserId === user.id);
+    Boolean(user && (personagem.ownerUserId == null || personagem.ownerUserId === user.id));
 
   const handleRemover = async (personagem: Character) => {
     if (!isSupabaseConfigured() || !podeRemover(personagem)) return;
@@ -310,7 +320,7 @@ export default function CharacterSheetsSection() {
       setPersonagens((prev) => prev.filter((p) => p.id !== personagem.id));
       setSelectedId((cur) => (cur === personagem.id ? null : cur));
     } catch (e) {
-      setListError(e instanceof Error ? e.message : 'Não foi possível remover o personagem.');
+      setListError(mensagemErro(e, 'Não foi possível remover o personagem.'));
     }
   };
 
@@ -377,7 +387,7 @@ export default function CharacterSheetsSection() {
       clearNovaSkin();
       setNovoPersonagemOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Não foi possível salvar o personagem.');
+      setFormError(mensagemErro(err, 'Não foi possível salvar o personagem.'));
     } finally {
       setFormSaving(false);
     }
