@@ -11,7 +11,10 @@ import {
 } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { useNavigate } from 'react-router-dom';
 import { Trash2, Upload, UserPlus, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useGuest } from '../contexts/GuestContext';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
 import {
   deleteCharacter,
@@ -31,6 +34,8 @@ type Character = {
   skinUrl?: string;
   /** Caminho no bucket (para apagar o ficheiro ao remover) */
   skinPath?: string | null;
+  /** Dono (só este utilizador pode apagar, quando autenticado) */
+  ownerUserId: string | null;
 };
 
 const MAX_SKIN_FILE_BYTES = 1_500_000;
@@ -43,6 +48,7 @@ function mapRowToCharacter(row: CharacterRow): Character {
     descricao: row.descricao,
     skinUrl: getSkinPublicUrl(row.skin_path),
     skinPath: row.skin_path,
+    ownerUserId: row.user_id ?? null,
   };
 }
 
@@ -208,6 +214,9 @@ function CharacterPortrait({
 }
 
 export default function CharacterSheetsSection() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isGuest, leaveGuest } = useGuest();
   const { ref, inView } = useInView({
     threshold: 0.2,
     triggerOnce: true,
@@ -218,6 +227,7 @@ export default function CharacterSheetsSection() {
   const [listError, setListError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [novoPersonagemOpen, setNovoPersonagemOpen] = useState(false);
+  const [guestBloqueioOpen, setGuestBloqueioOpen] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -248,7 +258,7 @@ export default function CharacterSheetsSection() {
         if (!cancelled) setPersonagens(rows.map(mapRowToCharacter));
       } catch (e) {
         if (!cancelled) {
-          setListError(e instanceof Error ? e.message : 'Erro ao carregar as fichas.');
+          setListError(e instanceof Error ? e.message : 'Erro ao carregar as fichas de personagem.');
         }
       } finally {
         if (!cancelled) setListLoading(false);
@@ -257,13 +267,16 @@ export default function CharacterSheetsSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!novoPersonagemOpen) return;
+    if (!novoPersonagemOpen && !guestBloqueioOpen) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setNovoPersonagemOpen(false);
+      if (e.key === 'Escape') {
+        setNovoPersonagemOpen(false);
+        setGuestBloqueioOpen(false);
+      }
     };
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -272,7 +285,7 @@ export default function CharacterSheetsSection() {
       document.body.style.overflow = prev;
       window.removeEventListener('keydown', onKey);
     };
-  }, [novoPersonagemOpen]);
+  }, [novoPersonagemOpen, guestBloqueioOpen]);
 
   const classeCor: Record<string, string> = {
     Guerreiro: '#991b1b',
@@ -287,14 +300,17 @@ export default function CharacterSheetsSection() {
 
   const handleClose = () => setSelectedId(null);
 
+  const podeRemover = (personagem: Character) =>
+    Boolean(user && personagem.ownerUserId && personagem.ownerUserId === user.id);
+
   const handleRemover = async (personagem: Character) => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || !podeRemover(personagem)) return;
     try {
       await deleteCharacter(personagem.id, personagem.skinPath ?? null);
       setPersonagens((prev) => prev.filter((p) => p.id !== personagem.id));
       setSelectedId((cur) => (cur === personagem.id ? null : cur));
     } catch (e) {
-      setListError(e instanceof Error ? e.message : 'Não foi possível remover.');
+      setListError(e instanceof Error ? e.message : 'Não foi possível remover o personagem.');
     }
   };
 
@@ -339,7 +355,7 @@ export default function CharacterSheetsSection() {
     const nome = novoNome.trim();
     const classe = novaClasse.trim();
     const descricao = novaDescricao.trim();
-    if (!nome || !classe || !isSupabaseConfigured()) return;
+    if (!nome || !classe || !isSupabaseConfigured() || !user) return;
 
     setFormSaving(true);
     setFormError(null);
@@ -347,6 +363,7 @@ export default function CharacterSheetsSection() {
       const id = crypto.randomUUID();
       await insertCharacter({
         id,
+        userId: user.id,
         nome,
         classe,
         descricao: descricao || '—',
@@ -360,7 +377,7 @@ export default function CharacterSheetsSection() {
       clearNovaSkin();
       setNovoPersonagemOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Não foi possível guardar o personagem.');
+      setFormError(err instanceof Error ? err.message : 'Não foi possível salvar o personagem.');
     } finally {
       setFormSaving(false);
     }
@@ -371,18 +388,96 @@ export default function CharacterSheetsSection() {
       ref={ref}
       className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-deep-black via-[#111112] to-dark-gray overflow-hidden py-20"
     >
-      {/* Botão flutuante: abre o formulário "Novo personagem" */}
+      {/* Botão flutuante: visitante vê aviso; logado abre o formulário */}
       <button
         type="button"
-        onClick={() => setNovoPersonagemOpen(true)}
-        className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-full border border-ancient-gold/60 bg-deep-black/95 px-5 py-3.5 font-title text-sm tracking-wide text-ancient-gold shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all hover:border-ancient-gold hover:bg-deep-black hover:shadow-[0_0_28px_rgba(201,168,76,0.25)] md:bottom-8 md:right-8"
+        onClick={() => {
+          if (!isSupabaseConfigured()) return;
+          if (isGuest && !user) {
+            setGuestBloqueioOpen(true);
+            return;
+          }
+          if (!user) return;
+          setNovoPersonagemOpen(true);
+        }}
+        className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-full border border-ancient-gold/60 bg-deep-black/95 px-5 py-3.5 font-title text-sm tracking-wide text-ancient-gold shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all hover:border-ancient-gold hover:bg-deep-black hover:shadow-[0_0_28px_rgba(201,168,76,0.25)] md:bottom-8 md:right-8 disabled:opacity-40 disabled:cursor-not-allowed"
         aria-haspopup="dialog"
-        aria-expanded={novoPersonagemOpen}
-        aria-controls="modal-novo-personagem"
+        aria-expanded={novoPersonagemOpen || guestBloqueioOpen}
+        aria-controls={guestBloqueioOpen ? 'modal-guest-personagem' : 'modal-novo-personagem'}
+        disabled={!isSupabaseConfigured()}
       >
         <UserPlus className="w-5 h-5 shrink-0" aria-hidden />
         Personagens
       </button>
+
+      <AnimatePresence>
+        {guestBloqueioOpen && (
+          <motion.div
+            className="fixed inset-0 z-[110] flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+            onMouseDown={() => setGuestBloqueioOpen(false)}
+          >
+            <motion.div
+              id="modal-guest-personagem"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="titulo-guest-personagem"
+              className="relative w-full max-w-md rounded-lg border border-ancient-gold/70 bg-deep-black p-6 shadow-[0_0_48px_rgba(0,0,0,0.65)] text-center"
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ duration: 0.22 }}
+              onMouseDown={(ev) => ev.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setGuestBloqueioOpen(false)}
+                className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-md border border-stone-gray/50 text-parchment/70 hover:border-ancient-gold/50 hover:text-ancient-gold"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h3
+                id="titulo-guest-personagem"
+                className="font-title text-lg tracking-[0.15em] text-ancient-gold mb-3 pr-8"
+              >
+                LOGIN NECESSÁRIO
+              </h3>
+              <p className="font-body text-sm text-parchment/80 mb-6">
+                Só é possível adicionar personagens depois de fazer login. Crie uma conta ou entre com a sua para
+                publicar fichas na wiki.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGuestBloqueioOpen(false);
+                    leaveGuest();
+                  }}
+                  className="inline-flex justify-center rounded py-3 px-4 font-title text-xs tracking-[0.15em] text-deep-black bg-[#4a4428] hover:bg-[#5c5434] transition-colors"
+                >
+                  Fazer login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGuestBloqueioOpen(false);
+                    leaveGuest();
+                    navigate('/?tab=cadastro');
+                  }}
+                  className="inline-flex justify-center rounded py-3 px-4 font-title text-xs tracking-[0.15em] text-ancient-gold border border-ancient-gold/55 hover:bg-ancient-gold/10 transition-colors"
+                >
+                  Criar conta
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {novoPersonagemOpen && (
@@ -524,10 +619,16 @@ export default function CharacterSheetsSection() {
                 <div className="flex justify-center">
                   <button
                     type="submit"
-                    disabled={!novoNome.trim() || !novaClasse.trim() || formSaving || !isSupabaseConfigured()}
+                    disabled={
+                      !novoNome.trim() ||
+                      !novaClasse.trim() ||
+                      formSaving ||
+                      !isSupabaseConfigured() ||
+                      !user
+                    }
                     className="w-full max-w-xs rounded py-3 font-title text-xs tracking-[0.2em] text-deep-black transition-opacity disabled:cursor-not-allowed disabled:opacity-40 bg-[#4a4428] hover:bg-[#5c5434]"
                   >
-                    {formSaving ? 'A GUARDAR…' : 'ADICIONAR PERSONAGEM'}
+                    {formSaving ? 'SALVANDO…' : 'ADICIONAR PERSONAGEM'}
                   </button>
                 </div>
               </form>
@@ -553,16 +654,17 @@ export default function CharacterSheetsSection() {
           className="font-narrative text-parchment/80 text-lg md:text-xl leading-relaxed text-center mb-8 max-w-3xl mx-auto"
         >
           {selectedId === null
-            ? 'Clique em uma ficha para abrir a história e os detalhes. Use o botão Personagens no canto para criar um novo.'
+            ? 'Clique em uma ficha para ver a história e os detalhes. Use o botão Personagens no canto para criar um novo (é preciso estar logado). Você só apaga as fichas que criou com a sua conta.'
             : 'Ficha aberta — clique em outro card para trocar, no mesmo para fechar, ou use o botão fechar.'}
         </motion.p>
 
         {!isSupabaseConfigured() && (
           <div className="mb-8 max-w-3xl mx-auto rounded-lg border border-ancient-gold/35 bg-deep-black/60 px-4 py-3 text-center font-body text-sm text-parchment/80">
-            Para guardar personagens no site (Vercel), define{' '}
+            Para salvar personagens no site (ex.: Vercel), configure{' '}
             <span className="text-ancient-gold/90">VITE_SUPABASE_URL</span> e{' '}
-            <span className="text-ancient-gold/90">VITE_SUPABASE_ANON_KEY</span> nas variáveis de ambiente e corre o
-            SQL em <span className="text-ancient-gold/90">supabase/schema_characters.sql</span> no teu projeto Supabase.
+            <span className="text-ancient-gold/90">VITE_SUPABASE_ANON_KEY</span> nas variáveis de ambiente e rode o SQL
+            em <span className="text-ancient-gold/90">supabase/schema_characters.sql</span> e{' '}
+            <span className="text-ancient-gold/90">supabase/migrate_characters_auth.sql</span> no seu projeto Supabase.
           </div>
         )}
 
@@ -579,7 +681,7 @@ export default function CharacterSheetsSection() {
             Nenhum personagem ainda
             {isSupabaseConfigured()
               ? '. Use o botão Personagens no canto para adicionar o primeiro.'
-              : ' — configura o Supabase para começar a guardar fichas.'}
+              : ' — configure o Supabase para começar a salvar fichas.'}
           </p>
         ) : !listLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -600,7 +702,7 @@ export default function CharacterSheetsSection() {
                     aria-pressed={active}
                     aria-expanded={active}
                     className={`relative w-full text-left p-4 border rounded-lg backdrop-blur-sm transition-all duration-300 ${
-                      active ? 'pr-12' : 'pr-4'
+                      active && podeRemover(personagem) ? 'pr-12' : 'pr-4'
                     } ${
                       active
                         ? 'border-ancient-gold bg-deep-black/90 shadow-[0_0_28px_rgba(201,168,76,0.35)]'
@@ -615,7 +717,7 @@ export default function CharacterSheetsSection() {
                     <h3 className="font-title text-2xl text-ancient-gold mt-3">{personagem.nome}</h3>
                     <p className="font-narrative text-parchment/80 text-base">{personagem.classe}</p>
                   </motion.button>
-                  {active && (
+                  {active && podeRemover(personagem) && (
                     <button
                       type="button"
                       onClick={(ev) => {
@@ -677,14 +779,20 @@ export default function CharacterSheetsSection() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => void handleRemover(selected)}
-                      className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-blood-red/50 font-body text-sm text-blood-red hover:bg-blood-red/15 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Remover este personagem
-                    </button>
+                    {podeRemover(selected) ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleRemover(selected)}
+                        className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-blood-red/50 font-body text-sm text-blood-red hover:bg-blood-red/15 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Remover este personagem
+                      </button>
+                    ) : (
+                      <p className="mt-8 font-body text-sm text-parchment/45">
+                        Só o dono da ficha pode removê-la da wiki.
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.div>

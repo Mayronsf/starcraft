@@ -1,7 +1,23 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Home } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
+import { ArrowLeft, Home, LogIn, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGuest } from '../../contexts/GuestContext';
+import { isSupabaseConfigured } from '../../lib/supabaseClient';
+
+function profileNick(user: User): string | null {
+  const m = user.user_metadata as Record<string, unknown> | undefined;
+  if (!m) return null;
+  const raw = m.nick ?? m.display_name;
+  if (typeof raw !== 'string') return null;
+  const s = raw.trim();
+  return s.length > 0 ? s : null;
+}
 
 export default function WikiLayout() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { isGuest, leaveGuest } = useGuest();
+  const wikiNick = user ? profileNick(user) : null;
   const { pathname } = useLocation();
   const normalized = pathname.replace(/\/$/, '');
   const isWikiHome = normalized === '/wiki';
@@ -24,17 +40,63 @@ export default function WikiLayout() {
             <ArrowLeft className="w-4 h-4 shrink-0 opacity-90" aria-hidden />
             Voltar ao site
           </Link>
-          {!isWikiHome ? (
-            <Link
-              to="/wiki"
-              className="inline-flex items-center gap-2 text-parchment/85 hover:text-ancient-gold transition-colors"
-            >
-              <Home className="w-4 h-4 shrink-0 opacity-90" aria-hidden />
-              Página principal da Wiki
-            </Link>
-          ) : (
-            <span className="text-parchment/45 text-xs md:text-sm">Navegação estilo MediaWiki</span>
-          )}
+          <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+            {!isWikiHome ? (
+              <Link
+                to="/wiki"
+                className="inline-flex items-center gap-2 text-parchment/85 hover:text-ancient-gold transition-colors"
+              >
+                <Home className="w-4 h-4 shrink-0 opacity-90" aria-hidden />
+                Página principal da wiki
+              </Link>
+            ) : (
+              <span className="text-parchment/45 text-xs md:text-sm">Navegação estilo MediaWiki</span>
+            )}
+            {isSupabaseConfigured() && !authLoading && (
+              <div className="flex items-center gap-2 border-l border-white/15 pl-4">
+                {user ? (
+                  <>
+                    <div className="flex flex-col items-end max-w-[min(200px,42vw)] sm:max-w-[200px] text-right leading-tight">
+                      {wikiNick && (
+                        <span className="font-title text-[11px] sm:text-xs tracking-[0.12em] text-ancient-gold truncate w-full">
+                          {wikiNick}
+                        </span>
+                      )}
+                      <span
+                        className={`truncate w-full text-[10px] sm:text-[11px] ${
+                          wikiNick ? 'text-parchment/45 mt-0.5' : 'text-xs text-parchment/55'
+                        }`}
+                      >
+                        {user.email}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void signOut()}
+                      className="inline-flex items-center gap-1.5 rounded border border-stone-gray/45 px-2.5 py-1 text-xs text-parchment/80 hover:border-ancient-gold/45 hover:text-ancient-gold transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5 shrink-0 opacity-90" aria-hidden />
+                      Sair
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {isGuest && (
+                      <span className="text-xs text-parchment/50 hidden sm:inline">Visitante</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => leaveGuest()}
+                      className="inline-flex items-center gap-1.5 rounded border border-stone-gray/45 px-2.5 py-1 text-xs text-parchment/80 hover:border-ancient-gold/45 hover:text-ancient-gold transition-colors"
+                    >
+                      <LogIn className="w-3.5 h-3.5 shrink-0 opacity-90" aria-hidden />
+                      Fazer login
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-center font-title text-ancient-gold text-sm md:text-base tracking-wide py-2 border-t border-white/10">
           StarCraft — A Gênese · Wiki

@@ -1,4 +1,7 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import { useGuest } from './contexts/GuestContext';
+import { isSupabaseConfigured } from './lib/supabaseClient';
 import HomePage from './pages/HomePage';
 import PluginsPage from './pages/PluginsPage';
 import WikiLayout from './pages/wiki/WikiLayout';
@@ -13,11 +16,23 @@ import WikiLivroIIIPage from './pages/wiki/WikiLivroIIIPage';
 import WikiLivroIVPage from './pages/wiki/WikiLivroIVPage';
 import WikiLivroVPage from './pages/wiki/WikiLivroVPage';
 import WikiCharacterSheetsPage from './pages/wiki/WikiCharacterSheetsPage';
+import AuthPage from './pages/AuthPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
-export default function App() {
+function AppLoadingScreen() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-deep-black via-[#111112] to-dark-gray flex items-center justify-center text-parchment/50 text-sm font-body">
+      Carregando…
+    </div>
+  );
+}
+
+function MainRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/redefinir-palavra-passe" element={<ResetPasswordPage />} />
+      <Route path="/entrar" element={<Navigate to="/" replace />} />
       <Route path="/plugins" element={<PluginsPage />} />
       <Route path="/wiki" element={<WikiLayout />}>
         <Route index element={<WikiIndex />} />
@@ -34,4 +49,27 @@ export default function App() {
       </Route>
     </Routes>
   );
+}
+
+export default function App() {
+  const { user, loading } = useAuth();
+  const { isGuest, guestReady } = useGuest();
+
+  if (!isSupabaseConfigured()) {
+    return <MainRoutes />;
+  }
+
+  if (!guestReady || loading) {
+    return <AppLoadingScreen />;
+  }
+
+  if (!user && !isGuest) {
+    return (
+      <Routes>
+        <Route path="*" element={<AuthPage />} />
+      </Routes>
+    );
+  }
+
+  return <MainRoutes />;
 }

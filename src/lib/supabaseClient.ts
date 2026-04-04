@@ -6,11 +6,21 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 }
 
+/**
+ * URL para onde o Supabase redireciona após o utilizador clicar no link do email de recuperação.
+ * Adiciona o mesmo URL em Supabase → Authentication → URL Configuration → Redirect URLs.
+ */
+export function getPasswordRecoveryRedirectUrl(): string {
+  const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const path = `${base}/redefinir-palavra-passe`.replace(/\/+/g, '/');
+  return `${window.location.origin}${path}`;
+}
+
 export function getSupabase(): SupabaseClient {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    throw new Error('Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (Vercel → Environment Variables).');
+    throw new Error('Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ex.: Vercel → Environment Variables).');
   }
   if (!client) {
     client = createClient(url, key);

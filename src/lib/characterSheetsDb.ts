@@ -6,6 +6,8 @@ export type CharacterRow = {
   classe: string;
   descricao: string;
   skin_path: string | null;
+  /** Dono da ficha (null = registos antigos antes da autenticação) */
+  user_id: string | null;
   created_at?: string;
 };
 
@@ -21,7 +23,7 @@ export async function fetchCharacters(): Promise<CharacterRow[]> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('characters')
-    .select('id, nome, classe, descricao, skin_path, created_at')
+    .select('id, nome, classe, descricao, skin_path, user_id, created_at')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -30,6 +32,7 @@ export async function fetchCharacters(): Promise<CharacterRow[]> {
 
 export async function insertCharacter(params: {
   id: string;
+  userId: string;
   nome: string;
   classe: string;
   descricao: string;
@@ -39,7 +42,7 @@ export async function insertCharacter(params: {
   let skinPath: string | null = null;
 
   if (params.skinFile) {
-    skinPath = `${params.id}.png`;
+    skinPath = `${params.userId}/${params.id}.png`;
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(skinPath, params.skinFile, {
       contentType: params.skinFile.type || 'image/png',
       upsert: false,
@@ -49,6 +52,7 @@ export async function insertCharacter(params: {
 
   const { error } = await supabase.from('characters').insert({
     id: params.id,
+    user_id: params.userId,
     nome: params.nome,
     classe: params.classe,
     descricao: params.descricao || '—',

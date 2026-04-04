@@ -1,5 +1,5 @@
 -- Executar no Supabase: SQL Editor → New query → Run
--- Ajusta políticas depois se quiseres restringir quem cria/apaga (auth, service role, etc.)
+-- Para login e dono da ficha: corre também migrate_characters_auth.sql (coluna user_id + RLS).
 
 create extension if not exists "pgcrypto";
 

@@ -1,0 +1,37 @@
+Personalizar emails (visual + assunto) — StarCraft
+==================================================
+
+Onde editar
+-----------
+1. Abre o projeto no Supabase: https://supabase.com/dashboard
+2. Authentication → Email templates
+3. Escolhe o modelo (ex.: "Reset password" ou "Confirm signup")
+4. Altera o ASSUNTO (Subject) e cola o HTML do ficheiro correspondente
+   nesta pasta no campo do CORPO (Body), em modo HTML.
+
+Ficheiros
+---------
+- reset-password.html     → modelo "Reset password"
+- confirm-signup.html     → modelo "Confirm signup" (se usares confirmação por email)
+
+Assuntos sugeridos (podes mudar o texto)
+---------------------------------------
+- Reset password:  Redefinir palavra-passe — StarCraft — A Gênese
+- Confirm signup:  Confirma o teu email — StarCraft — A Gênese
+
+IMPORTANTE: não apagues {{ .ConfirmationURL }} no HTML — é o link que o Supabase gera.
+
+Sobre o nome "Supabase" no remetente
+------------------------------------
+O CONTEÚDO do email (cores, textos, botões) fica 100% como nos modelos acima.
+
+O campo "De" (From) continua muitas vezes associado aos servidores do Supabase
+enquanto usares o envio por defeito deles. Para aparecer algo como
+"StarCraft <noreply@teudominio.com>" é preciso configurar SMTP próprio:
+Project Settings → Authentication → SMTP Settings (ou documentação atual do painel).
+
+Redirect URLs
+-------------
+Garante que a URL de recuperação está na lista em
+Authentication → URL Configuration → Redirect URLs
+(ex.: http://localhost:5173/redefinir-palavra-passe e o URL de produção).
